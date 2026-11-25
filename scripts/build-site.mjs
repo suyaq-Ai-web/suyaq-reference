@@ -14,6 +14,15 @@ const TAGLINE = 'مرجع المطوّر العربي للذكاء الاصطن�
 const REPO = 'https://github.com/khly500/suyaq-reference';
 const NOW = new Date().toISOString().slice(0, 10);
 
+// المؤسس: يربط اسمه بالموقع في محركات البحث
+const AUTHOR = 'خليل عبدالرحمن الشمردل';
+const AUTHOR_ID = SITE + '/#person';
+const PERSON = { '@context': 'https://schema.org', '@type': 'Person', '@id': AUTHOR_ID, name: AUTHOR,
+  alternateName: ['khalil_skakah', 'خليل الشمردل', 'Khalil Alshamardal'], url: SITE + '/about/',
+  jobTitle: 'مطور ذكاء اصطناعي وخبير منتجات ذهبي في Google',
+  address: { '@type': 'PostalAddress', addressLocality: 'سكاكا', addressRegion: 'الجوف', addressCountry: 'SA' },
+  sameAs: ['https://github.com/khly500', 'https://skakh.com/about'] };
+
 const ctx = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8'), ctx);
 const DATA = ctx.window.DATA; const REMOVED = ctx.window.REMOVED || {}; const SUGGEST = REPO + '/issues/new?template=prompt_suggestion.yml';
@@ -68,7 +77,8 @@ const head = ({ title, description, path: p, type = 'website', ld = [] }) => `<m
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
 <meta name="twitter:image" content="${SITE}/og.png">
-${ld.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('\n')}`;
+<meta name="author" content="${AUTHOR}">
+${[...ld, ...(p === '/' || p === '/about/' ? [PERSON] : [])].map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('\n')}`;
 
 // ---------- الصفحة الرئيسية: التطبيق الحالي + SEO + فهرس مقروء للزواحف ----------
 const byCat = {};
@@ -79,7 +89,7 @@ let app = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').replace(/^\uFEF
 const homeTitle = `${NAME} — ${TAGLINE}`;
 const homeDesc = `${DATA.length} برومبتاً وكوداً عربياً جاهزاً للنسخ والتجربة: مراجعة كود، تلخيص، لهجات، SQL، معالجة النص العربي وأكثر. مجاناً ومفتوح المصدر.`;
 const homeLd = [
-{ '@context': 'https://schema.org', '@type': 'WebSite', name: NAME, alternateName: ['Suyaq', 'سياق', 'سياق AI'], url: SITE + '/', inLanguage: 'ar', description: homeDesc, publisher: { '@type': 'Person', name: 'Khalil Alshamardal' } },
+{ '@context': 'https://schema.org', '@type': 'WebSite', author: { '@id': AUTHOR_ID }, creator: { '@id': AUTHOR_ID }, name: NAME, alternateName: ['Suyaq', 'سياق', 'سياق AI'], url: SITE + '/', inLanguage: 'ar', description: homeDesc, publisher: { '@type': 'Person', name: 'Khalil Alshamardal' } },
 { '@context': 'https://schema.org', '@type': 'CollectionPage', name: homeTitle, url: SITE + '/', inLanguage: 'ar', hasPart: DATA.slice(0, 20).map((d) => ({ '@type': 'CreativeWork', name: d.title, url: SITE + d.url })) },
 ];
 app = app.replace(/<meta charset="utf-8">\s*<meta name="viewport"[^>]*>\s*<title>[\s\S]*?<meta name="description"[^>]*>/, head({ title: homeTitle, description: homeDesc, path: '/', ld: homeLd }));
@@ -119,7 +129,7 @@ ${FONT}
 <main>
 ${body}
 </main>
-<footer aria-label="روابط الموقع"><nav><a href="/">المكتبة</a><a href="/tools/">الأدوات</a><a href="/learn/">تعلّم</a><a href="/pitfalls/">أخطاء شائعة</a><a href="/faq/">الأسئلة</a><a href="/api/">API</a><a href="/about/">عن الموقع</a><a href="/privacy/">الخصوصية</a><a href="${SUGGEST}" target="_blank" rel="noopener">اقترح برومبت</a></nav></footer>
+<footer aria-label="روابط الموقع"><nav><a href="/">المكتبة</a><a href="/tools/">الأدوات</a><a href="/learn/">تعلّم</a><a href="/pitfalls/">أخطاء شائعة</a><a href="/faq/">الأسئلة</a><a href="/api/">API</a><a href="/about/">عن الموقع</a><a href="/privacy/">الخصوصية</a><a href="${SUGGEST}" target="_blank" rel="noopener">اقترح برومبت</a><a href="/about/" rel="author">إعداد: ${AUTHOR}</a></nav></footer>
 </body>
 </html>`;
 
@@ -131,7 +141,7 @@ const vars = isP ? [...new Set([...d.body.matchAll(/\{\{(.+?)\}\}/g)].map((m) =>
 const title = d.title.length > 40 ? `${d.title} | ${NAME}` : `${d.title} — ${isP ? 'برومبت عربي جاهز' : `كود ${d.lang} جاهز`} | ${NAME}`;
 const description = clip(`${d.title}: ${isP ? 'برومبت عربي جاهز للنسخ والتجربة. ' : `كود ${d.lang} جاهز للنسخ. `}${d.desc}`, 158);
 const ld = [
-{ '@context': 'https://schema.org', '@type': isP ? 'CreativeWork' : 'SoftwareSourceCode', name: d.title, description: d.desc, inLanguage: 'ar', url: SITE + d.url, genre: d.cat, ...(isP ? { text: d.body } : { programmingLanguage: d.lang, codeSampleType: 'snippet', text: d.body }), isPartOf: { '@type': 'WebSite', name: NAME, url: SITE + '/' }, author: { '@type': 'Person', name: 'Khalil Alshamardal' }, license: 'https://opensource.org/licenses/MIT' },
+{ '@context': 'https://schema.org', '@type': isP ? 'CreativeWork' : 'SoftwareSourceCode', author: { '@type': 'Person', '@id': AUTHOR_ID, name: AUTHOR, url: SITE + '/about/' }, name: d.title, description: d.desc, inLanguage: 'ar', url: SITE + d.url, genre: d.cat, ...(isP ? { text: d.body } : { programmingLanguage: d.lang, codeSampleType: 'snippet', text: d.body }), isPartOf: { '@type': 'WebSite', name: NAME, url: SITE + '/' }, author: { '@type': 'Person', name: 'Khalil Alshamardal' }, license: 'https://opensource.org/licenses/MIT' },
 ...(isP ? [{ '@context': 'https://schema.org', '@type': 'HowTo', name: `كيف تستخدم برومبت «${d.title}»`, description: d.desc, inLanguage: 'ar', step: [
 { '@type': 'HowToStep', position: 1, name: 'املأ المتغيرات', text: vars.length ? `أدخل قيم: ${vars.join('، ')}.` : 'راجع نص البرومبت وعدّله حسب حاجتك.' },
 { '@type': 'HowToStep', position: 2, name: 'انسخ البرومبت', text: 'اضغط زر النسخ أو المفتاح C.' },
@@ -144,6 +154,7 @@ const ld = [
 const body = `<div class="crumb"><a href="/">${NAME}</a> / <a href="/c/${slugOf(d.cat)}/">${esc(d.cat)}</a></div>
 <h1>${esc(d.title)}</h1>
 <div><span class="pill">${esc(d.kind)}</span><span class="pill">${esc(d.cat)}</span></div>
+<p style="font-size:13px;opacity:.8;margin:8px 0">إعداد: <a href="/about/" rel="author">${AUTHOR}</a></p>
 <p class="lead">${esc(d.desc)}</p>
 ${vars.length ? `<h2>املأ المتغيرات</h2><style>.vf{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0 0 18px}.vf label{display:block;font-size:13px;margin-bottom:4px;opacity:.8}.vf textarea{width:100%;box-sizing:border-box;font:inherit;background:transparent;color:inherit;border:1px solid rgba(128,128,128,.4);border-radius:9px;padding:8px 12px}#toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,12px);background:#17171c;border:1px solid #2a2a33;color:#4ade9e;padding:9px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s}#toast.s{opacity:1;transform:translate(-50%,0)}</style><div class="vf" id="vf">${vars.map((v, i) => `<div><label for="v${i}">${esc(v)}</label><textarea id="v${i}" data-k="${esc(v)}" rows="${v === 'المدخل' ? 4 : 1}" placeholder="…"></textarea></div>`).join('')}</div>` : ''}
 <pre id="body" class="${isP ? 'ar' : ''}"${vars.length ? ` data-src="${esc(d.body)}"` : ''}><code>${esc(d.body)}</code></pre><div id="toast" role="status"></div>
@@ -177,7 +188,7 @@ const text = s.content.replace(/\\{\\{(.+?)\\}\\}/g, (m, k) => values[k] ?? m);
 <p class="lead">الترخيص MIT. الشيفرة على <a href="${REPO}" rel="noopener">GitHub</a>.</p>`;
 write('api/index.html', page({ title: `واجهة المطورين (API) | ${NAME}`, description: 'JSON مجاني لكل برومبت وكود عربي في سِياق، مع المتغيرات والترخيص، يدعم CORS.', path: '/api/', body: apiBody }));
 
-write('about/index.html', page({ title: `عن الموقع | ${NAME}`, description: 'سِياق مكتبة عربية مجانية ومفتوحة المصدر للبرومبتات والأكواد الجاهزة لمن يعمل مع الذكاء الاصطناعي.', path: '/about/', body: `<div class="crumb"><a href="/">${NAME}</a> / عن الموقع</div><h1>عن سِياق</h1><p class="lead">سِياق مكتبة عربية مجانية للبرومبتات والأكواد الجاهزة لمن يعمل مع الذكاء الاصطناعي. فيه الآن ${DATA.length} عنصراً مرتبة في ${catNames.length} تصنيفاً، وكلها قابلة للنسخ والتجربة مباشرة.</p><h2>لماذا سِياق؟</h2><p class="lead">معظم مراجع البرومبتات بالإنجليزية، ونصوصها العربية قليلة أو مترجمة ترجمة حرفية. هنا كُتبت البرومبتات بالعربية من الأساس، وفيها متغيرات تملؤها وتنسخ النتيجة جاهزة.</p><h2>من وراء الموقع؟</h2><p class="lead">أعدّه خليل الشمردل (Khal!l) ويطوّره باستمرار.</p><h2>شارك</h2><p class="lead">عندك برومبت مفيد؟ <a href="${SUGGEST}" target="_blank" rel="noopener">اقترحه</a> وسأراجعه وأضيفه. والمشروع مفتوح المصدر على <a href="${REPO}" rel="noopener">GitHub</a> برخصة MIT، وله <a href="/api/">واجهة JSON</a> مجانية.</p><h2>تنبيه</h2><p class="lead">البرومبتات نقطة بداية، ونتائج الذكاء الاصطناعي قد تحتوي على أخطاء. راجع الناتج قبل الاعتماد عليه، ولا ترسل بيانات سرية أو شخصية إلى أي نموذج.</p>` })); write('privacy/index.html', page({ title: `سياسة الخصوصية | ${NAME}`, description: 'كيف يتعامل سِياق مع بياناتك: لا حسابات ولا تتبع ولا إعلانات.', path: '/privacy/', body: `<div class="crumb"><a href="/">${NAME}</a> / الخصوصية</div><h1>سياسة الخصوصية</h1><p class="lead">آخر تحديث: ${NOW}.</p><h2>ما الذي نجمعه؟</h2><p class="lead">لا يطلب سِياق حساباً ولا بريداً ولا أي بيانات شخصية، ولا يعرض إعلانات. يستخدم الموقع «تحليلات Cloudflare» (Cloudflare Web Analytics) لقياس عدد الزيارات والصفحات الأكثر زيارة، وهي أداة تحترم الخصوصية: لا تستخدم ملفات الكوكيز ولا تتبّع الأفراد عبر المواقع.</p><h2>ما يُحفظ في متصفحك</h2><p class="lead">المفضلة التي تحفظها تُخزَّن في متصفحك فقط ولا تُرسل إلينا، ويمكنك حذفها بمسح بيانات الموقع من المتصفح.</p><h2>خدمات خارجية</h2><p class="lead">يُحمَّل الخط من Google Fonts، فيصل الطلب إلى خوادم Google وفق سياستها. ويُستضاف الموقع على Cloudflare Pages، وقد تسجّل خوادمها عنوان IP لأغراض التشغيل والأمان. وعند ضغطك «جرّب في ChatGPT» أو «جرّب في Claude» يُفتح موقع الخدمة ويُرسل إليها نص البرومبت الظاهر في الصفحة، وتخضع لسياسة تلك الخدمة. أما زر Gemini فينسخ النص إلى حافظتك فقط ثم يفتح Gemini.</p><h2>اقتراح برومبت</h2><p class="lead">يتم الاقتراح عبر GitHub، وما تكتبه هناك علني ويخضع لسياسة GitHub.</p><h2>التواصل</h2><p class="lead">لأي سؤال افتح طلباً في <a href="${REPO}/issues" rel="noopener">GitHub</a>.</p>` })); // ---------- صفحات التصنيفات ----------
+write('about/index.html', page({ title: `عن سِياق ومؤسسه ${AUTHOR} | ${NAME}`, description: AUTHOR + ' (khalil_skakah) مؤسس سِياق. سِياق مكتبة عربية مجانية ومفتوحة المصدر للبرومبتات والأكواد الجاهزة لمن يعمل مع الذكاء الاصطناعي.', path: '/about/', body: `<div class="crumb"><a href="/">${NAME}</a> / عن الموقع</div><h1>عن سِياق</h1><h2>المؤسس</h2><p class="lead">أسّس سِياق ويطوّره <strong>${AUTHOR}</strong> (khalil_skakah)، خبير منتجات ذهبي في منتديات Google ومرشد محلي في سكاكا، منطقة الجوف.</p><p class="lead"><a href="https://github.com/khly500" rel="me noopener">GitHub</a> · <a href="https://skakh.com/about" rel="me">سكاكا سوفت</a></p><p class="lead">سِياق مكتبة عربية مجانية للبرومبتات والأكواد الجاهزة لمن يعمل مع الذكاء الاصطناعي. فيه الآن ${DATA.length} عنصراً مرتبة في ${catNames.length} تصنيفاً، وكلها قابلة للنسخ والتجربة مباشرة.</p><h2>لماذا سِياق؟</h2><p class="lead">معظم مراجع البرومبتات بالإنجليزية، ونصوصها العربية قليلة أو مترجمة ترجمة حرفية. هنا كُتبت البرومبتات بالعربية من الأساس، وفيها متغيرات تملؤها وتنسخ النتيجة جاهزة.</p><h2>من وراء الموقع؟</h2><p class="lead">أعدّه خليل الشمردل (Khal!l) ويطوّره باستمرار.</p><h2>شارك</h2><p class="lead">عندك برومبت مفيد؟ <a href="${SUGGEST}" target="_blank" rel="noopener">اقترحه</a> وسأراجعه وأضيفه. والمشروع مفتوح المصدر على <a href="${REPO}" rel="noopener">GitHub</a> برخصة MIT، وله <a href="/api/">واجهة JSON</a> مجانية.</p><h2>تنبيه</h2><p class="lead">البرومبتات نقطة بداية، ونتائج الذكاء الاصطناعي قد تحتوي على أخطاء. راجع الناتج قبل الاعتماد عليه، ولا ترسل بيانات سرية أو شخصية إلى أي نموذج.</p>` })); write('privacy/index.html', page({ title: `سياسة الخصوصية | ${NAME}`, description: 'كيف يتعامل سِياق مع بياناتك: لا حسابات ولا تتبع ولا إعلانات.', path: '/privacy/', body: `<div class="crumb"><a href="/">${NAME}</a> / الخصوصية</div><h1>سياسة الخصوصية</h1><p class="lead">آخر تحديث: ${NOW}.</p><h2>ما الذي نجمعه؟</h2><p class="lead">لا يطلب سِياق حساباً ولا بريداً ولا أي بيانات شخصية، ولا يعرض إعلانات. يستخدم الموقع «تحليلات Cloudflare» (Cloudflare Web Analytics) لقياس عدد الزيارات والصفحات الأكثر زيارة، وهي أداة تحترم الخصوصية: لا تستخدم ملفات الكوكيز ولا تتبّع الأفراد عبر المواقع.</p><h2>ما يُحفظ في متصفحك</h2><p class="lead">المفضلة التي تحفظها تُخزَّن في متصفحك فقط ولا تُرسل إلينا، ويمكنك حذفها بمسح بيانات الموقع من المتصفح.</p><h2>خدمات خارجية</h2><p class="lead">يُحمَّل الخط من Google Fonts، فيصل الطلب إلى خوادم Google وفق سياستها. ويُستضاف الموقع على Cloudflare Pages، وقد تسجّل خوادمها عنوان IP لأغراض التشغيل والأمان. وعند ضغطك «جرّب في ChatGPT» أو «جرّب في Claude» يُفتح موقع الخدمة ويُرسل إليها نص البرومبت الظاهر في الصفحة، وتخضع لسياسة تلك الخدمة. أما زر Gemini فينسخ النص إلى حافظتك فقط ثم يفتح Gemini.</p><h2>اقتراح برومبت</h2><p class="lead">يتم الاقتراح عبر GitHub، وما تكتبه هناك علني ويخضع لسياسة GitHub.</p><h2>التواصل</h2><p class="lead">لأي سؤال افتح طلباً في <a href="${REPO}/issues" rel="noopener">GitHub</a>.</p>` })); // ---------- صفحات التصنيفات ----------
 for (const c of catNames) {
 const list = byCat[c];
 const p = `/c/${slugOf(c)}/`;
