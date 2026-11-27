@@ -51,6 +51,7 @@ const GEN = ['كن محدداً: كلما زادت التفاصيل في طلب�
 const write = (rel, content) => {
 const f = path.join(DIST, rel);
 fs.mkdirSync(path.dirname(f), { recursive: true });
+if (typeof content === 'string') content = content.replace(/\r\n/g, '\n'); // CSP: المتصفح يحسب البصمة بنهايات LF
 fs.writeFileSync(f, content, 'utf8');
 };
 
